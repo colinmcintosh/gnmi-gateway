@@ -37,6 +37,18 @@ lint: imports
 	go fmt ./ ./gateway/...
 	go vet
 
+release:
+	mkdir -p release
+	rm -f release/gnmi-gateway release/gnmi-gateway.exe
+ifeq ($(shell go env GOOS), windows)
+	go build -o release/gnmi-gateway.exe $(GOFLAGS) .
+	zip -m "release/gnmi-gateway-$(shell git describe --tags --abbrev=0)-$(shell go env GOOS)-$(shell go env GOARCH).zip" release/gnmi-gateway.exe
+else
+	go build -o release/gnmi-gateway $(GOFLAGS) .
+	zip -m "release/gnmi-gateway-$(shell git describe --tags --abbrev=0)-$(shell go env GOOS)-$(shell go env GOARCH).zip" release/gnmi-gateway
+endif
+	sha256sum "release/gnmi-gateway-$(shell git describe --tags --abbrev=0)-$(shell go env GOOS)-$(shell go env GOARCH).zip" > "release/gnmi-gateway-$(shell git describe --tags --abbrev=0)-$(shell go env GOOS)-$(shell go env GOARCH).zip.sha256"
+
 run: build
 	./gnmi-gateway -EnableGNMIServer -ServerTLSCert=server.crt -ServerTLSKey=server.key -TargetLoaders=json -TargetJSONFile=targets.json
 
